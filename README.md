@@ -26,7 +26,7 @@ images:
 Next, you can run Nautikos to update the image tag: 
 
 ```bash 
-nautikos --image some-repository --env prod --tag 1.2.3
+nautikos --env prod some-repository 1.2.3 
 ```
 
 This will update the tags for the image `some-repository` to `1.2.3` in the files `prod-env-1-file.yaml` and `prod-env-2-file.yaml`.
