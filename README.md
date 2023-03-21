@@ -16,11 +16,14 @@ images:
   environments: 
   - name: prod 
     manifests: 
-    - path/to/prod-env-1-file.yaml
-    - path/to/prod-env-2-file.yaml 
+    - path: path/to/prod-env-1-file.yaml
+      type: kubernetes
+    - path: path/to/prod-env-2-file.yaml 
+      type: kustomize
   - name: dev
     manifests: 
-    - path/to/dev-env-file.yaml
+    - path: path/to/dev-env-file.yaml
+      type: helm
 ```
 
 Next, you can run Nautikos to update the image tag: 
