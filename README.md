@@ -4,7 +4,15 @@ Nautikos is a CLI tool for updating image tags in Kubernetes manifests, as part 
 
 ## Rationale 
 
-In a GitOps process, a deployment repo typically contains Kubernetes manifests for multiple services and environments. When you create a new image for your application, you want the correct manifests to be updated with the new tag. Doing this manually is error prone. Having to write logic in every repo or pipeline to perform this is tedious. This is where Nautikos comes in. 
+In a GitOps process, a deployment repo typically contains Kubernetes manifests for multiple services and environments. When you create a new image for your application, you want the correct manifests to be updated with the new tag. Doing this manually is error prone. Having to write logic in every repo or pipeline to perform this is tedious. 
+
+This is where Nautikos comes in. 
+
+## Installation 
+
+```bash
+pip install nautikos
+```
 
 ## Basic usage 
 
@@ -50,6 +58,10 @@ image:
 - repository: some-repository 
   tag: tag 
 ```
+
+## Notes
+
+YAML objects are ordered alphabetically; order is not preserved. 
 
 ## Advanced usage
 

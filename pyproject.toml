@@ -25,6 +25,7 @@ poethepoet = "^0.18.1"
 
 [tool.poe.tasks]
 format.sequence = [
+    {cmd = "black ."},
     {cmd = "ruff check . --fix"}, 
     {cmd = "black ."}
 ]
