@@ -12,6 +12,7 @@ nautikos = "nautikos.nautikos:app"
 python = "^3.10"
 typer = "^0.7.0"
 PyYAML = "^6.0"
+rich = "^13.3.2"
 
 [tool.poetry.group.dev.dependencies]
 ruff = "^0.0.257"
@@ -23,10 +24,11 @@ poethepoet = "^0.18.1"
 
 
 [tool.poe.tasks]
-format = [
+format.sequence = [
     {cmd = "ruff check . --fix"}, 
     {cmd = "black ."}
 ]
+format.ignore_fail = true
 test = [
     {cmd = "ruff check ."},
     {cmd = "black . --check"}, 
