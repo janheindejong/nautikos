@@ -3,10 +3,14 @@ from enum import Enum
 from typing import TextIO, TypedDict
 
 import typer
-import yaml
 from rich import print
+from ruamel.yaml import YAML
 
 app = typer.Typer()
+
+yaml = YAML()
+yaml.default_flow_style = False
+yaml.preserve_quotes = True
 
 
 class ManifestType(Enum):
@@ -57,44 +61,43 @@ def main(
 
 def _read_config(filepath: str) -> Config:
     with open(filepath, "r") as f:
-        data = yaml.safe_load(f.read())
+        data = yaml.load(f.read())
     return data
 
 
 class AbstractManifest(abc.ABC):
     def load(self, stream: TextIO) -> None:
-        self._manifest = yaml.safe_load(stream)
+        self._data = yaml.load(stream)
 
     def write(self, stream: TextIO) -> None:
-        stream.write(self.__str__())
+        yaml.dump(self.data, stream)
 
     @property
-    def manifest(self) -> str:
-        if self._manifest:
-            return self._manifest
+    def data(self) -> str:
+        if self._data:
+            return self._data
         else:
             raise Exception("You must first load a manifest")
 
     @abc.abstractmethod
-    def modify(self, repository: str, tag: str) -> str:
+    def modify(self, repository: str, new_tag: str) -> str:
         ...
 
     @abc.abstractmethod
     def get_images(self) -> list[Image]:
         ...
 
-    def __str__(self) -> str:
-        return yaml.dump(self.manifest)
+
+KubernetesImage = str
 
 
 class KubernetesManifest(AbstractManifest):
-    def modify(self, repository: str, tag: str) -> None:
-        containers = self._get_containers()
-        for container in containers:
-            image = self._parse_image(container["image"])
-            if image["repository"] == repository:
-                image["tag"] = tag
-                container["image"] = self._unparse_image(image)
+    def modify(self, repository: str, new_tag: str) -> None:
+        for container in self._get_containers():
+            if repository == self._parse_image(container["image"])["repository"]:
+                container["image"] = self._unparse_image(
+                    {"repository": repository, "tag": new_tag}
+                )
 
     def get_images(self) -> list[Image]:
         return [
@@ -103,14 +106,32 @@ class KubernetesManifest(AbstractManifest):
         ]
 
     def _get_containers(self) -> list[KubernetesContainer]:
-        return self.manifest["spec"]["template"]["spec"]["containers"]
+        return self.data["spec"]["template"]["spec"]["containers"]
 
-    def _parse_image(self, image: str) -> Image:
-        if ":" in image: 
+    def _parse_image(self, image: KubernetesImage) -> Image:
+        if ":" in image:
             repository, tag = tuple(image.split(":"))
-        else: 
+        else:
             repository, tag = image, None
-        return Image(repository=repository, tag=tag)
+        return {"repository": repository, "tag": tag}
 
     def _unparse_image(self, image: Image) -> str:
         return f"{image['repository']}:{image['tag']}"
+
+
+class KustomizeImage(TypedDict):
+    name: str
+    newTag: str
+
+
+class KustomizeManifest(AbstractManifest):
+    def modify(self, repository: str, new_tag: str) -> None:
+        for kustomize_image in self._data["images"]:
+            if repository == kustomize_image["name"]:
+                kustomize_image["newTag"] = new_tag
+
+    def get_images(self) -> list[Image]:
+        return [self._parse_image(image) for image in self._data["images"]]
+
+    def _parse_image(self, image: KustomizeImage) -> Image:
+        return {"repository": image["name"], "tag": image["newTag"]}
