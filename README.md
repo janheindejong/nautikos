@@ -24,19 +24,17 @@ environments:
   manifests: 
   - path: path/to/prod-env-1-file.yaml
     type: kubernetes
+  - path: path/to/prod-env-2-file.yaml 
+    type: kustomize
+    # Optional specification what repositories should be modified; if not, all occurences 
+    # will be modified
     repositories: 
       - repository-A
       - repository-B
-  - path: path/to/prod-env-2-file.yaml 
-    type: kustomize
-    repositories: 
-      - repository-A
 - name: dev
   manifests: 
   - path: path/to/dev-env-file.yaml
     type: helm
-    repositories: 
-      - repository-A
 ```
 
 Next, you can run Nautikos to update the image tag: 

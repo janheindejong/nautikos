@@ -21,7 +21,10 @@ def apply_new_tag(
     env: EnvironmentConfig, repository: str, tag: str, dry_run: bool = True
 ) -> None:
     for manifest_config in env["manifests"]:
-        if repository not in manifest_config["repositories"]:
+        if (
+            len(manifest_config["repositories"]) > 0
+            and repository not in manifest_config["repositories"]
+        ):
             continue
         manifest = get_manifest(manifest_config["type"])
         with open(manifest_config["path"], "r") as s:
