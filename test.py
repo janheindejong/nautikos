@@ -1,16 +1,11 @@
-from enum import Enum 
+from enum import Enum
 
 
-
-class MyEnum(Enum): 
+class MyEnum(Enum):
     TEST = "test"
 
 
-
-stuff = {
-    MyEnum.TEST: "Hello!"
-}
+stuff = {MyEnum.TEST: "Hello!"}
 
 
 print(stuff[MyEnum("bla")])
-

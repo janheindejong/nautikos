@@ -72,7 +72,7 @@ class TestKustomizeManifest:
         assert manifest.get_images()[1] == {
             "repository": "some-other-repository",
             "tag": "1.2.3",
-        }    
+        }
 
     def test_write(self, output_file: io.StringIO):
         assert output_file.getvalue() == OUTPUT

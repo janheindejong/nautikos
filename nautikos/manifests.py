@@ -9,7 +9,6 @@ class Image(TypedDict):
     tag: str
 
 
-
 class AbstractManifest(abc.ABC):
     def load(self, stream: TextIO) -> None:
         self._data = yaml.load(stream)
@@ -86,13 +85,13 @@ class KustomizeManifest(AbstractManifest):
         return {"repository": image["name"], "tag": image["newTag"]}
 
 
-def get_manifest(type: str) -> AbstractManifest: 
-    if type == "kubernetes": 
+def get_manifest(type: str) -> AbstractManifest:
+    if type == "kubernetes":
         manifest = KubernetesManifest()
-    elif type == "kustomize": 
+    elif type == "kustomize":
         manifest = KustomizeManifest()
-    elif type == "helm": 
+    elif type == "helm":
         raise Exception("Helm manifests are not yet implemented.")
-    else: 
+    else:
         raise Exception(f"'{type}' is not a correct manifest type.")
-    return manifest 
+    return manifest

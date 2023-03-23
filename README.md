@@ -19,23 +19,6 @@ pip install nautikos
 Nautikos is configured through a YAML-file (`nautikos.yaml`), that specifies where the manifests for the different images and environments can be found: 
 
 ```yaml
-images: 
-- repository: some-repository
-  environments: 
-  - name: prod 
-    manifests: 
-    - path: path/to/prod-env-1-file.yaml
-      type: kubernetes
-    - path: path/to/prod-env-2-file.yaml 
-      type: kustomize
-  - name: dev
-    manifests: 
-    - path: path/to/dev-env-file.yaml
-      type: helm
-```
-
-
-```yaml
 environments: 
 - name: prod 
   manifests: 
