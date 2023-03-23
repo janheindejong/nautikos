@@ -2,7 +2,7 @@ import io
 
 import pytest
 
-from nautikos.nautikos import KubernetesManifest
+from nautikos.manifests import KubernetesManifest
 
 INPUT = """# Comment
 apiVersion: apps/v1

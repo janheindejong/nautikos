@@ -2,7 +2,7 @@ import io
 
 import pytest
 
-from nautikos.nautikos import KustomizeManifest
+from nautikos.manifests import KustomizeManifest
 
 INPUT = """# Comment
 resources:

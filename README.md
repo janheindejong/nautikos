@@ -34,6 +34,28 @@ images:
       type: helm
 ```
 
+
+```yaml
+environments: 
+- name: prod 
+  manifests: 
+  - path: path/to/prod-env-1-file.yaml
+    type: kubernetes
+    repositories: 
+      - repository-A
+      - repository-B
+  - path: path/to/prod-env-2-file.yaml 
+    type: kustomize
+    repositories: 
+      - repository-A
+- name: dev
+  manifests: 
+  - path: path/to/dev-env-file.yaml
+    type: helm
+    repositories: 
+      - repository-A
+```
+
 Next, you can run Nautikos to update the image tag: 
 
 ```bash 

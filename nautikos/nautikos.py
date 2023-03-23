@@ -1,137 +1,68 @@
-import abc
-from enum import Enum
-from typing import TextIO, TypedDict
+from __future__ import annotations
 
-import typer
-from rich import print
-from ruamel.yaml import YAML
-
-app = typer.Typer()
-
-yaml = YAML()
-yaml.default_flow_style = False
-yaml.preserve_quotes = True
+from typing import TypedDict
 
 
-class ManifestType(Enum):
-    KUBERNETES = "kubernetes"
-    KUSTOMIZE = "kustomize"
-    HELM = "helm"
-
-
-class Manifest(TypedDict):
+class ManifestConfig(TypedDict):
     path: str
-    type: ManifestType
+    type: str
+    repositories: list[str]
 
 
-class Environment(TypedDict):
+class EnvironmentConfig(TypedDict):
     name: str
     manifests: list[str]
 
 
-class ImageConfig(TypedDict):
-    repository: str
-    environments: list[Environment]
-
-
 class Config(TypedDict):
-    images: list[ImageConfig]
+    environments: list[EnvironmentConfig]
 
 
-class Image(TypedDict):
-    repository: str
-    tag: str
+# class ManifestEditor: 
+
+#     def __init__(self, dry_run: bool = False) -> None:
+#         self._dry_run = dry_run
+
+#     def edit(self, manifest_config: ManifestConfig, tag: str) -> None: 
+#         manifest = _manifest_factory(manifest_config["type"])
+#         with open(manifest_config["path"], "r") as s: 
+#             manifest.load(s)
+#             manifest.modify(repository, tag)
+#         if self._dry_run: 
+#             manifest.write(sys.stdout)
+#         else: 
+#             with open(manifest_config["path"], "w") as s:
+#                 manifest.write(s)
 
 
-class KubernetesContainer(TypedDict):
-    image: str
+#     def load(self, configfile: str) -> None: 
+#         self._config = self._read_config(configfile)
 
+#     def run(self, repository, tag, env, dry_run=False) -> None: 
+#         manifest_configs = self._get_manifest_configs(repository, env)
+#         for manifest_config in manifest_configs: 
+#             manifest = _manifest_factory(manifest_config["type"])
+#             with open(manifest_config["path"], "r") as s: 
+#                 manifest.load(s)
+#                 manifest.modify(repository, tag)
+#             if dry_run: 
+#                 print(manifest.data)
+#             else: 
+#                 with open(manifest_config["path"], "w") as s:
+#                     manifest.write(s)
 
-@app.command()
-def main(
-    image: str,
-    tag: str,
-    env: str = typer.Option(None),
-    dry_run: bool = typer.Option(False, "--dry-run"),
-    config: str = typer.Option("nautikos.yaml"),
-):
-    config_data = _read_config(config)
-    print(config_data)
-
-
-def _read_config(filepath: str) -> Config:
-    with open(filepath, "r") as f:
-        data = yaml.load(f.read())
-    return data
-
-
-class AbstractManifest(abc.ABC):
-    def load(self, stream: TextIO) -> None:
-        self._data = yaml.load(stream)
-
-    def write(self, stream: TextIO) -> None:
-        yaml.dump(self.data, stream)
-
-    @property
-    def data(self) -> str:
-        if self._data:
-            return self._data
-        else:
-            raise Exception("You must first load a manifest")
-
-    @abc.abstractmethod
-    def modify(self, repository: str, new_tag: str) -> str:
-        ...
-
-    @abc.abstractmethod
-    def get_images(self) -> list[Image]:
-        ...
-
-
-KubernetesImage = str
-
-
-class KubernetesManifest(AbstractManifest):
-    def modify(self, repository: str, new_tag: str) -> None:
-        for container in self._get_containers():
-            if repository == self._parse_image(container["image"])["repository"]:
-                container["image"] = self._unparse_image(
-                    {"repository": repository, "tag": new_tag}
-                )
-
-    def get_images(self) -> list[Image]:
-        return [
-            self._parse_image(container["image"])
-            for container in self._get_containers()
-        ]
-
-    def _get_containers(self) -> list[KubernetesContainer]:
-        return self.data["spec"]["template"]["spec"]["containers"]
-
-    def _parse_image(self, image: KubernetesImage) -> Image:
-        if ":" in image:
-            repository, tag = tuple(image.split(":"))
-        else:
-            repository, tag = image, None
-        return {"repository": repository, "tag": tag}
-
-    def _unparse_image(self, image: Image) -> str:
-        return f"{image['repository']}:{image['tag']}"
-
-
-class KustomizeImage(TypedDict):
-    name: str
-    newTag: str
-
-
-class KustomizeManifest(AbstractManifest):
-    def modify(self, repository: str, new_tag: str) -> None:
-        for kustomize_image in self._data["images"]:
-            if repository == kustomize_image["name"]:
-                kustomize_image["newTag"] = new_tag
-
-    def get_images(self) -> list[Image]:
-        return [self._parse_image(image) for image in self._data["images"]]
-
-    def _parse_image(self, image: KustomizeImage) -> Image:
-        return {"repository": image["name"], "tag": image["newTag"]}
+#     def _get_manifest_configs(self, repository: str, env: str) -> list[ManifestConfig]:
+#         image = next((image for image in self._config["images"] if image["repository"] == repository), None)
+#         if not image: 
+#             raise Exception(f"Image {image} is not in configuration file")
+#         environment = next((environment for environment in image["environments"	] if environment["name"] == env), None)
+#         if not environment: 
+#             raise Exception(f"Environment {env} is not in configuration file")
+#         return environment["manifests"]
+    
+                
+#     @staticmethod
+#     def _read_config(filepath: str) -> Config:
+#         with open(filepath, "r") as f:
+#             data = yaml.load(f.read())
+#         return data
