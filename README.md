@@ -1,10 +1,13 @@
 # Nautikos 
 
-Nautikos is a CLI tool for updating image tags in Kubernetes manifests, as part of a GitOps CI/CD process. 
+*A lightweight CI/CD tool for updating image tags in Kubernetes manifests.* 
+
+[![PyPI version](https://badge.fury.io/py/nautikos.svg)](https://badge.fury.io/py/nautikos)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## Rationale
 
-In a GitOps CI/CD process, a deployment repo contains Kubernetes manifests for multiple services and environments, that are tracked by a tool like *Argo-CD* or *Flux*. When a new image of an application is created, you want the tags for that image to be updated in the manifests. Doing this manually is error prone. Having to write logic in every repo or pipeline to perform this is tedious. 
+A GitOps CI/CD process usually uses a deployment or ops repo containing Kubernetes manifests for multiple services and environments. Tools like *Argo-CD* or *Flux* then track these repo's, and apply any changes to the cluster. When a new image of an application is created, you want the corresponding tags to be updated in the manifests. Doing this manually is error prone. Having to write logic in every repo or pipeline to perform this is tedious. 
 
 This is where Nautikos comes in. 
 
@@ -28,7 +31,7 @@ environments:
     type: kubernetes  # Type can be 'kubernetes', 'kustomize' or 'helm'
   - path: path/to/prod-env-2-file.yaml 
     type: kustomize
-    repositories:  # Optional specification of repositories to be modified for more granular control
+    repositories:  # Optional specification of repositories to be modified
       - repository-b
       - repository-c
 - name: dev
