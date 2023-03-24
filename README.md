@@ -75,7 +75,7 @@ image:
 
 Nautikos takes several options: 
 
-* `--dry-run`: prints the lines that would be modified, but doesn't edit in place 
+* `--dry-run`: prints the modified files to stdout, but doesn't edit in place 
 * `--config config-file.yaml`: path to config YAML, default is `./nautikos.yaml`
 
 ## Alternatives 
