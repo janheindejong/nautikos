@@ -24,7 +24,7 @@ images:
 - name: some-repository
   newTag: '1.1'
 - name: some-other-repository
-  newTag: '1.2.3'
+  newTag: 1.2.3
 
 patchesStrategicMerge:
 - ingress.yml

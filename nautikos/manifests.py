@@ -1,12 +1,12 @@
 import abc
-from typing import TextIO, TypedDict
+from typing import Any, TextIO, TypedDict
 
 from .yaml import yaml
 
 
 class Image(TypedDict):
     repository: str
-    tag: str
+    tag: str | None
 
 
 class AbstractManifest(abc.ABC):
@@ -17,14 +17,14 @@ class AbstractManifest(abc.ABC):
         yaml.dump(self.data, stream)
 
     @property
-    def data(self) -> str:
+    def data(self) -> Any:
         if self._data:
             return self._data
         else:
             raise Exception("You must first load a manifest")
 
     @abc.abstractmethod
-    def modify(self, repository: str, new_tag: str) -> str:
+    def modify(self, repository: str, new_tag: str) -> None:
         ...
 
     @abc.abstractmethod
@@ -79,7 +79,7 @@ class KustomizeManifest(AbstractManifest):
                 kustomize_image["newTag"] = new_tag
 
     def get_images(self) -> list[Image]:
-        return [self._parse_image(image) for image in self._data["images"]]
+        return [self._parse_image(image) for image in self.data["images"]]
 
     def _parse_image(self, image: KustomizeImageDefinition) -> Image:
         return {"repository": image["name"], "tag": image["newTag"]}
@@ -87,11 +87,10 @@ class KustomizeManifest(AbstractManifest):
 
 def get_manifest(type: str) -> AbstractManifest:
     if type == "kubernetes":
-        manifest = KubernetesManifest()
+        return KubernetesManifest()
     elif type == "kustomize":
-        manifest = KustomizeManifest()
+        return KustomizeManifest()
     elif type == "helm":
         raise Exception("Helm manifests are not yet implemented.")
     else:
         raise Exception(f"'{type}' is not a correct manifest type.")
-    return manifest

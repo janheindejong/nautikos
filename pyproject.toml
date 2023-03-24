@@ -34,7 +34,9 @@ format.ignore_fail = true
 test = [
     {cmd = "ruff check ."},
     {cmd = "black . --check"}, 
-    {cmd = "mypy ."}
+    {cmd = "mypy ."}, 
+    {cmd = "pytest -vv"}
+
 ]
 
 [tool.ruff]

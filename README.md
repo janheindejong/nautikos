@@ -24,7 +24,7 @@ environments:
 # update simultaneously. 
 - name: prod 
   manifests: 
-  - path: path/to/prod-env-1-file.yaml
+  - path: path/to/prod-env-1-file.yaml  # Path relative to configuration file
     type: kubernetes  # Type can be 'kubernetes', 'kustomize' or 'helm'
   - path: path/to/prod-env-2-file.yaml 
     type: kustomize
@@ -51,7 +51,11 @@ The tool works with standard **Kubernetes** manifests, **Kustomize**, and **Helm
 
 ```yaml
 # Kubernetes manifests
-image: "some-repository:tag"
+spec:
+  template:
+    spec:
+      containers:
+      - image: some-repository:tag
 
 # Kustomize
 images: 
@@ -78,6 +82,10 @@ There are basically three alternatives to do the same thing:
 * **Update manifests manually** - of course this works, but this is not really proper CD
 * **Write your own bash scripts in a pipeline using a tool like `sed`** - This works, but having to write this logic for every project is tedious. 
 * **Use a tool like [Argo-CD Image updater](https://argocd-image-updater.readthedocs.io/en/stable/)** - very nice, but a bit heavy-weight, not very actively developed, and doesn't seem to support Azure Container Registry. 
+
+## Notes 
+
+Multiple YAML docs in one file is not yet supported. 
 
 ## Dependencies 
 
