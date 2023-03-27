@@ -53,10 +53,10 @@ environments:
 Next, you can run Nautikos to update the image tags of specific images in different environments.
 
 ```bash
-nautikos my-repo 1.2.3  # Updates all occurences of `my-repo` to `1.2.3`
-nautikos --env prod my-other-repo 2.3.4  # Updates all occurences of `my-other-repo` to `2.3.4` in `prod/app1/deployment.yaml` and `prod/app2/deployment`
-nautikos --env dev --label app1 my-other-repo 4.5.6  # Updates all occurences of `my-other-repo` to `4.5.6` in `dev/app1/deployment.yaml`
-nautikos --label 'app1,refs/head/main' my-other-repo 5.6.7  # Updates all occurences of `my-other-repo` to `5.6.7` in `prod/app1/deployment.yaml`
+nautikos my-repo 1.2.3  # Updates all occurences of `my-repo` to `1.2.3` in all manifests
+nautikos --env prod my-repo 2.3.4  # Updates all occurences of `my-repo` to `2.3.4` in `prod/app1/deployment.yaml` and `prod/app2/deployment`
+nautikos --env dev --label app1 my-repo 4.5.6  # Updates all occurences of `my-repo` to `4.5.6` in `dev/app1/deployment.yaml`
+nautikos --label 'app1,refs/head/main' my-repo 5.6.7  # Updates all occurences of `my-repo` to `5.6.7` in `prod/app1/deployment.yaml`
 ```
 
 ## Supported tools
@@ -89,7 +89,7 @@ Nautikos takes several options:
 There are basically three alternatives to do the same thing: 
 
 * **Update manifests manually** - of course this works, but this is not really proper CD
-* **Write your own bash scripts in a pipeline using a tool like `sed`** - This works, but having to write this logic for every project is tedious. 
+* **Write your own bash scripts in a pipeline using a tool like `sed` or `yq`** - This works, but having to write this logic for every project is tedious. 
 * **Use a tool like [Argo-CD Image updater](https://argocd-image-updater.readthedocs.io/en/stable/)** - very nice, but a bit heavy-weight, not very actively developed, and doesn't seem to support Azure Container Registry. 
 
 ## Notes 

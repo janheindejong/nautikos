@@ -22,8 +22,6 @@ types-pyyaml = "^6.0.12.8"
 poethepoet = "^0.18.1"
 rich = "^13.3.2"
 
-
-
 [tool.poe.tasks]
 format.sequence = [
     {cmd = "black ."},
