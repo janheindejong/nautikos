@@ -74,12 +74,16 @@ class KustomizeImageDefinition(TypedDict):
 
 class KustomizeManifest(AbstractManifest):
     def modify(self, repository: str, new_tag: str) -> None:
-        for kustomize_image in self._data["images"]:
-            if repository == kustomize_image["name"]:
-                kustomize_image["newTag"] = new_tag
+        if "images" in self._data:
+            for kustomize_image in self.data["images"]:
+                if repository == kustomize_image["name"]:
+                    kustomize_image["newTag"] = new_tag
 
     def get_images(self) -> list[Image]:
-        return [self._parse_image(image) for image in self.data["images"]]
+        if "images" in self._data:
+            return [self._parse_image(image) for image in self.data["images"]]
+        else: 
+            return []
 
     def _parse_image(self, image: KustomizeImageDefinition) -> Image:
         return {"repository": image["name"], "tag": image["newTag"]}
