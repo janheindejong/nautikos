@@ -24,34 +24,44 @@ Nautikos is configured through a YAML-file (`./nautikos.yaml`), that specifies w
 
 ```yaml
 environments: 
-# An environment is basically a collection of manifests that you want to 
-# update simultaneously. 
 - name: prod 
   manifests: 
-  - path: path/to/prod-env-1-file.yaml  # Path relative to configuration file
-    type: kubernetes  # Type can be 'kubernetes', 'kustomize' or 'helm'
-  - path: path/to/prod-env-2-file.yaml 
+  - path: prod/app1/deployment.yaml  # Path relative to configuration file
+    type: kubernetes  # Type can be 'kubernetes' or 'kustomize'
+    labels: 
+    - app1
+    - refs/head/main
+  - path: prod/app2/kustomize.yaml
     type: kustomize
-    repositories:  # Optional specification of repositories to be modified
-      - repository-b
-      - repository-c
+    labels:  # Optional specification of labels for more granular control
+    - app2
+    - refs/head/master
 - name: dev
   manifests: 
-  - path: path/to/dev-env-file.yaml
-    type: helm
+  - path: dev/app1/deployment.yaml
+    type: kubernetes
+    labels: 
+    - app1
+    - refs/head/dev
+  - path: dev/app3/feature-A/deployment.yaml
+    type: kubernetes
+    labels: 
+    - app1
+    - refs/head/feature-A
 ```
 
 Next, you can run Nautikos to update the image tags of specific images in different environments.
 
 ```bash
-nautikos --env prod repository-a 1.2.3  # Updates all occurences of the image `repository-a` to `1.2.3` in `prod-env-1-file.yaml`
-nautikos --env prod repository-b 1.2.3  # Updates all occurences of the image `repository-b` to `1.2.3` in `prod-env-1-file.yaml` and `prod-env-1-file.yaml`
-nautikos --env dev repository-c dev-1.2.3  # Updates all occurences of the image `repository-c` to `dev-1.2.3` in `dev-env-file.yaml`
+nautikos my-repo 1.2.3  # Updates all occurences of `my-repo` to `1.2.3`
+nautikos --env prod my-other-repo 2.3.4  # Updates all occurences of `my-other-repo` to `2.3.4` in `prod/app1/deployment.yaml` and `prod/app2/deployment`
+nautikos --env dev --label app1 my-other-repo 4.5.6  # Updates all occurences of `my-other-repo` to `4.5.6` in `dev/app1/deployment.yaml`
+nautikos --label 'app1,refs/head/main' my-other-repo 5.6.7  # Updates all occurences of `my-other-repo` to `5.6.7` in `prod/app1/deployment.yaml`
 ```
 
 ## Supported tools
 
-The tool works with standard **Kubernetes** manifests, **Kustomize**, and **Helm**. Each have their own format for defining image tags. 
+The tool works with standard **Kubernetes** manifests and **Kustomize** - **Helm** might be added later. Each have their own format for defining image tags. 
 
 ```yaml
 # Kubernetes manifests
@@ -65,11 +75,6 @@ spec:
 images: 
 - name: some-repository
   newTag: tag 
-
-# Helm 
-image: 
-- repository: some-repository 
-  tag: tag 
 ```
 
 ## Advanced usage

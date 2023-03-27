@@ -1,71 +1,57 @@
 import os
 import tempfile
-from typing import Generator
+from typing import Generator, TypedDict
 
 import pytest
+from ruamel.yaml import YAML
 
 from nautikos.nautikos import Nautikos
 
-CONFIG_FILE = """environments:
+CONFIG_FILE = """environments: 
 - name: prod 
   manifests: 
-  - path: prod/app1/deployment.yaml
-    type: kubernetes
+  - path: prod/app1/deployment.yaml  # Path relative to configuration file
+    type: kubernetes  # Type can be 'kubernetes' or 'kustomize'
+    labels: 
+    - app1
+    - refs/head/main
   - path: prod/app2/kustomize.yaml
     type: kustomize
-    repositories:
-      - repository-b
-      - repository-c
+    labels:  # Optional specification of labels for more granular control
+    - app2
+    - refs/head/master
 - name: dev
   manifests: 
-  - path: dev/app3/deployment.yaml
+  - path: dev/app1/deployment.yaml
     type: kubernetes
+    labels: 
+    - app1
+    - refs/head/dev
+  - path: dev/app1/feature-A/deployment.yaml
+    type: kubernetes
+    labels: 
+    - app1
+    - refs/head/feature-A
 """
-
 KUBERNETES_MANIFEST = """spec:
   template:
     spec:
       containers:
-      - image: repository-a:1.0
-      - image: repository-b:2.0
-      - image: repository-c:3.0
+      - image: my-repo:1.0
+      - image: my-other-repo:1.0
+      - image: some-other-repo:1.0
 """
 KUSTOMIZE_MANIFEST = """images:
-- name: repository-a
+- name: my-repo
   newTag: 1.0
-- name: repository-b
-  newTag: 2.0
-- name: repository-c
-  newTag: 3.0
-"""
-
-
-PROD_APP_ONE_OUTPUT = """spec:
-  template:
-    spec:
-      containers:
-      - image: repository-a:1.2.3
-      - image: repository-b:4.5.6
-      - image: repository-c:3.0
-"""
-
-PROD_APP_TWO_OUTPUT = """images:
-- name: repository-a
+- name: my-other-repo
   newTag: 1.0
-- name: repository-b
-  newTag: 4.5.6
-- name: repository-c
-  newTag: 3.0
+- name: some-other-repo
+  newTag: 1.0
 """
 
-DEV_APP_ONE_OUTPUT = """spec:
-  template:
-    spec:
-      containers:
-      - image: repository-a:1.0
-      - image: repository-b:2.0
-      - image: repository-c:7.8.9
-"""
+
+yaml = YAML()
 
 
 @pytest.fixture(scope="class")
@@ -74,58 +60,28 @@ def workdir() -> Generator[str, None, None]:
         yield workdir
 
 
-class TestNautikos:
-    @pytest.fixture(autouse=True, scope="class")
-    def prepare_workdir(self, workdir: str) -> None:
-        _create_file(workdir, "nautikos.yaml", CONFIG_FILE)
-        _create_file(
-            os.path.join(workdir, "prod", "app1"),
-            "deployment.yaml",
-            KUBERNETES_MANIFEST,
-        )
-        _create_file(
-            os.path.join(workdir, "prod", "app2"), "kustomize.yaml", KUSTOMIZE_MANIFEST
-        )
-        _create_file(
-            os.path.join(workdir, "dev", "app3"), "deployment.yaml", KUBERNETES_MANIFEST
-        )
-
-    @pytest.fixture(scope="class")
-    def nautikos(self, workdir: str):
-        nautikos = Nautikos()
-        nautikos.set_dry_run(False)
-        nautikos.load_config(os.path.join(workdir, "nautikos.yaml"))
-        return nautikos
-
-    @pytest.fixture(autouse=True, scope="class")
-    def update_manifests(self, nautikos: Nautikos):
-        nautikos.update_manifests("prod", "repository-a", "1.2.3")
-        nautikos.update_manifests("prod", "repository-b", "4.5.6")
-        nautikos.update_manifests("dev", "repository-c", "7.8.9")
-
-    def test_prod_app_one(self, nautikos: Nautikos):
-        with open(
-            os.path.join(nautikos._workdir, "prod", "app1", "deployment.yaml"), "r"
-        ) as f:
-            output = f.read()
-        assert output == PROD_APP_ONE_OUTPUT
-
-    def test_prod_app_two(self, nautikos: Nautikos):
-        with open(
-            os.path.join(nautikos._workdir, "prod", "app2", "kustomize.yaml"), "r"
-        ) as f:
-            output = f.read()
-        assert output == PROD_APP_TWO_OUTPUT
-
-    def test_dev_app_three(self, nautikos: Nautikos):
-        with open(
-            os.path.join(nautikos._workdir, "dev", "app3", "deployment.yaml"), "r"
-        ) as f:
-            output = f.read()
-        assert output == DEV_APP_ONE_OUTPUT
+@pytest.fixture(autouse=True, scope="class")
+def prepare_workdir(workdir: str) -> None:
+    create_file(workdir, "nautikos.yaml", CONFIG_FILE)
+    create_file(
+        os.path.join(workdir, "prod", "app1"),
+        "deployment.yaml",
+        KUBERNETES_MANIFEST,
+    )
+    create_file(
+        os.path.join(workdir, "prod", "app2"), "kustomize.yaml", KUSTOMIZE_MANIFEST
+    )
+    create_file(
+        os.path.join(workdir, "dev", "app1"), "deployment.yaml", KUBERNETES_MANIFEST
+    )
+    create_file(
+        os.path.join(workdir, "dev", "app1", "feature-A"),
+        "deployment.yaml",
+        KUBERNETES_MANIFEST,
+    )
 
 
-def _create_file(dir, name, content) -> None:
+def create_file(dir, name, content) -> None:
     try:
         os.makedirs(dir)
     except FileExistsError:
@@ -133,3 +89,113 @@ def _create_file(dir, name, content) -> None:
     path = os.path.join(dir, name)
     with open(path, "w") as f:
         f.write(content)
+
+
+@pytest.fixture(scope="class")
+def nautikos(workdir: str):
+    nautikos = Nautikos()
+    nautikos.set_dry_run(False)
+    nautikos.load_config(os.path.join(workdir, "nautikos.yaml"))
+    return nautikos
+
+
+class Tags(TypedDict):
+    prod_app_1: tuple[str, str, str]
+    prod_app_2: tuple[str, str, str]
+    dev_app_1: tuple[str, str, str]
+    dev_app_1_feature_a: tuple[str, str, str]
+
+
+class BaseTest:
+    TAGS: Tags
+
+    def _test_kustomize_manifest(
+        self, path: tuple[str, ...], tags: tuple[str, str, str]
+    ) -> None:
+        with open(os.path.join(*path), "r") as f:
+            data = yaml.load(f)
+        for i in range(3):
+            assert str(data["images"][i]["newTag"]) == tags[i]
+
+    def _test_k8s_manifest(
+        self, path: tuple[str, ...], tags: tuple[str, str, str]
+    ) -> None:
+        with open(os.path.join(*path), "r") as f:
+            data = yaml.load(f)
+        imgs = (
+            f"my-repo:{tags[0]}",
+            f"my-other-repo:{tags[1]}",
+            f"some-other-repo:{tags[2]}",
+        )
+        for i in range(3):
+            assert data["spec"]["template"]["spec"]["containers"][i]["image"] == imgs[i]
+
+    def test_prod_app1(self, workdir: str) -> None:
+        path = (workdir, "prod", "app1", "deployment.yaml")
+        self._test_k8s_manifest(path, self.TAGS["prod_app_1"])
+
+    def test_prod_app2(self, workdir: str) -> None:
+        path = (workdir, "prod", "app2", "kustomize.yaml")
+        self._test_kustomize_manifest(path, self.TAGS["prod_app_2"])
+
+    def test_dev_app1(self, workdir: str) -> None:
+        path = (workdir, "dev", "app1", "deployment.yaml")
+        self._test_k8s_manifest(path, self.TAGS["dev_app_1"])
+
+    def test_dev_app1_feature_a(self, workdir: str) -> None:
+        path = (workdir, "dev", "app1", "feature-A", "deployment.yaml")
+        self._test_k8s_manifest(path, self.TAGS["dev_app_1_feature_a"])
+
+
+class TestModifyAll(BaseTest):
+    TAGS = {
+        "prod_app_1": ("1.2.3", "1.0", "1.0"),
+        "prod_app_2": ("1.2.3", "1.0", "1.0"),
+        "dev_app_1": ("1.2.3", "1.0", "1.0"),
+        "dev_app_1_feature_a": ("1.2.3", "1.0", "1.0"),
+    }
+
+    @pytest.fixture(autouse=True, scope="class")
+    def modify(self, nautikos: Nautikos) -> None:
+        nautikos.update_manifests("my-repo", "1.2.3")
+
+
+class TestModifyProd(BaseTest):
+    TAGS = {
+        "prod_app_1": ("1.2.3", "1.0", "1.0"),
+        "prod_app_2": ("1.2.3", "1.0", "1.0"),
+        "dev_app_1": ("1.0", "1.0", "1.0"),
+        "dev_app_1_feature_a": ("1.0", "1.0", "1.0"),
+    }
+
+    @pytest.fixture(autouse=True, scope="class")
+    def modify(self, nautikos: Nautikos) -> None:
+        nautikos.update_manifests("my-repo", "1.2.3", environment="prod")
+
+
+class TestModifyProdApp1(BaseTest):
+    TAGS = {
+        "prod_app_1": ("1.2.3", "1.0", "1.0"),
+        "prod_app_2": ("1.0", "1.0", "1.0"),
+        "dev_app_1": ("1.0", "1.0", "1.0"),
+        "dev_app_1_feature_a": ("1.0", "1.0", "1.0"),
+    }
+
+    @pytest.fixture(autouse=True, scope="class")
+    def modify(self, nautikos: Nautikos) -> None:
+        nautikos.update_manifests(
+            "my-repo", "1.2.3", environment="prod", labels=["app1"]
+        )
+
+
+class TestModifyMultipleLabels(BaseTest):
+    TAGS = {
+        "prod_app_1": ("1.0", "1.0", "1.0"),
+        "prod_app_2": ("1.0", "1.0", "1.0"),
+        "dev_app_1": ("1.2.3", "1.0", "1.0"),
+        "dev_app_1_feature_a": ("1.0", "1.0", "1.0"),
+    }
+
+    @pytest.fixture(autouse=True, scope="class")
+    def modify(self, nautikos: Nautikos) -> None:
+        nautikos.update_manifests("my-repo", "1.2.3", labels=["app1", "refs/head/dev"])
