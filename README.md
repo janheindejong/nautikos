@@ -28,14 +28,11 @@ environments:
   manifests: 
   - path: prod/app1/deployment.yaml  # Path relative to configuration file
     type: kubernetes  # Type can be 'kubernetes' or 'kustomize'
-    labels: 
+    labels:  # Optional specification of labels for more granular control
     - app1
     - refs/heads/main
   - path: prod/app2/kustomize.yaml
     type: kustomize
-    labels:  # Optional specification of labels for more granular control
-    - app2
-    - refs/heads/master
 - name: dev
   manifests: 
   - path: dev/app1/deployment.yaml
