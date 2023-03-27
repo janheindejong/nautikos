@@ -21,3 +21,4 @@ def main(
     nautikos.update_manifests(
         repository, tag, environment=env, labels=labels.split(",")
     )
+    print(f"Successfully updated '{repository}' to '{tag}'")
