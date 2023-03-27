@@ -55,8 +55,8 @@ Next, you can run Nautikos to update the image tags of specific images in differ
 ```bash
 nautikos my-repo 1.2.3  # Updates all occurences of `my-repo` to `1.2.3` in all manifests
 nautikos --env prod my-repo 2.3.4  # Updates all occurences of `my-repo` to `2.3.4` in `prod/app1/deployment.yaml` and `prod/app2/deployment`
-nautikos --env dev --label app1 my-repo 4.5.6  # Updates all occurences of `my-repo` to `4.5.6` in `dev/app1/deployment.yaml`
-nautikos --label 'app1,refs/head/main' my-repo 5.6.7  # Updates all occurences of `my-repo` to `5.6.7` in `prod/app1/deployment.yaml`
+nautikos --env dev --labels app1 my-repo 4.5.6  # Updates all occurences of `my-repo` to `4.5.6` in `dev/app1/deployment.yaml`
+nautikos --labels 'app1,refs/head/main' my-repo 5.6.7  # Updates all occurences of `my-repo` to `5.6.7` in `prod/app1/deployment.yaml`
 ```
 
 ## Supported tools
