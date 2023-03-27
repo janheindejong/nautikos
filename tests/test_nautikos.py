@@ -17,9 +17,6 @@ CONFIG_FILE = """environments:
     - refs/head/main
   - path: prod/app2/kustomize.yaml
     type: kustomize
-    labels:  # Optional specification of labels for more granular control
-    - app2
-    - refs/head/master
 - name: dev
   manifests: 
   - path: dev/app1/deployment.yaml

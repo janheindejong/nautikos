@@ -67,7 +67,10 @@ class Nautikos:
         manifests: list[ManifestConfig] = []
         for env in envs:
             for manifest in env["manifests"]:
-                if not labels or set(labels).issubset(set(manifest["labels"])):
+                if not labels or (
+                    "labels" in manifest
+                    and set(labels).issubset(set(manifest["labels"]))
+                ):
                     manifests.append(manifest)
         if len(manifest) == 0:
             raise Exception(
