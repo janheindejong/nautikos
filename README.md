@@ -30,24 +30,24 @@ environments:
     type: kubernetes  # Type can be 'kubernetes' or 'kustomize'
     labels: 
     - app1
-    - refs/head/main
+    - refs/heads/main
   - path: prod/app2/kustomize.yaml
     type: kustomize
     labels:  # Optional specification of labels for more granular control
     - app2
-    - refs/head/master
+    - refs/heads/master
 - name: dev
   manifests: 
   - path: dev/app1/deployment.yaml
     type: kubernetes
     labels: 
     - app1
-    - refs/head/dev
+    - refs/heads/dev
   - path: dev/app3/feature-A/deployment.yaml
     type: kubernetes
     labels: 
     - app1
-    - refs/head/feature-A
+    - refs/heads/feature-A
 ```
 
 Next, you can run Nautikos to update the image tags of specific images in different environments.
@@ -56,7 +56,7 @@ Next, you can run Nautikos to update the image tags of specific images in differ
 nautikos my-repo 1.2.3  # Updates all occurences of `my-repo` to `1.2.3` in all manifests
 nautikos --env prod my-repo 2.3.4  # Updates all occurences of `my-repo` to `2.3.4` in `prod/app1/deployment.yaml` and `prod/app2/deployment`
 nautikos --env dev --labels app1 my-repo 4.5.6  # Updates all occurences of `my-repo` to `4.5.6` in `dev/app1/deployment.yaml`
-nautikos --labels 'app1,refs/head/main' my-repo 5.6.7  # Updates all occurences of `my-repo` to `5.6.7` in `prod/app1/deployment.yaml`
+nautikos --labels 'app1,refs/heads/main' my-repo 5.6.7  # Updates all occurences of `my-repo` to `5.6.7` in `prod/app1/deployment.yaml`
 ```
 
 ## Supported tools
