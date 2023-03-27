@@ -82,7 +82,7 @@ class KustomizeManifest(AbstractManifest):
     def get_images(self) -> list[Image]:
         if "images" in self._data:
             return [self._parse_image(image) for image in self.data["images"]]
-        else: 
+        else:
             return []
 
     def _parse_image(self, image: KustomizeImageDefinition) -> Image:
