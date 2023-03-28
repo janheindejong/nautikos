@@ -72,7 +72,7 @@ class Nautikos:
                     and set(labels).issubset(set(manifest["labels"]))
                 ):
                     manifests.append(manifest)
-        if len(manifest) == 0:
+        if len(manifests) == 0:
             raise Exception(
                 f"Oops!! No manifest found; environment={environment}"
                 f"labels={labels}"
