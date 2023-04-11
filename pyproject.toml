@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nautikos"
-version = "0.2.4"
+version = "0.3.0"
 description = "A CD tool for updating image tags in Kubernetes manifests"
 authors = ["Jan Hein de Jong <janhein.dejong@gmail.com>"]
 readme = "README.md"
