@@ -23,7 +23,10 @@ class Modification:
         return self.previous != self.new
 
     def __str__(self) -> str:
-        return f"{self.path} -> modified '{self.repository}' (was '{self.previous}')"
+        if self.updated:
+            return f"{self.path} -> modified '{self.repository}' to '{self.new}' (was '{self.previous}')"  # noqa: E501
+        else:
+            return f"{self.path} -> '{self.repository}' already up-to-date"
 
 
 class AbstractManifest(abc.ABC):

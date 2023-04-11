@@ -60,18 +60,11 @@ class Nautikos:
         """
         # Get all relevant environments
         environments = self._get_environments(environment)
-        if len(environments) == 0:
-            raise Exception(f"Oops! No environments found; environment={environment}")
 
         # Get all relevant manifests
         manifests: list[ManifestConfig] = []
         for env in environments:
             manifests += self._get_manifests(env, labels)
-        if len(manifests) == 0:
-            raise Exception(
-                f"Oops!! No manifest found; environment={environment};"
-                f"labels={labels}"
-            )
 
         # Modify manifests
         for manifest_config in manifests:
