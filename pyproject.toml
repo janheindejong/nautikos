@@ -1,9 +1,18 @@
 [tool.poetry]
 name = "nautikos"
-version = "0.3.1"
+version = "0.3.3"
 description = "A CD tool for updating image tags in Kubernetes manifests"
 authors = ["Jan Hein de Jong <janhein.dejong@gmail.com>"]
 readme = "README.md"
+license = "MIT"
+homepage = "https://www.github.com/janheindejong/nautikos"
+keywords = ["Kubernetes", "DevOps", "CI/CD", "Kustomize", "GitOps"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Build Tools", 
+    "Operating System :: OS Independent"
+]
 
 [tool.poetry.scripts]
 nautikos = "nautikos.cli:app"

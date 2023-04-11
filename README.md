@@ -8,7 +8,7 @@
 
 ## Rationale
 
-A GitOps CI/CD process usually uses a deployment or ops repo containing Kubernetes manifests for multiple services and environments. Tools like *Argo-CD* or *Flux* then track these repo's, and apply any changes to the cluster. When a new image of an application is created, you want the corresponding tags to be updated in the manifests. Doing this manually is error prone. Having to write logic in every repo or pipeline to perform this is tedious. 
+A GitOps CI/CD process often uses a deployment or ops repo containing Kubernetes manifests for multiple services and environments. Tools like *Argo-CD* or *Flux* then track these repo's, and apply any changes to the cluster. When a new image of an application is created, you want the corresponding tags to be updated in the manifests housed in the deployment repo. Doing this manually is error prone. Having to write logic in every repo or pipeline to perform this is tedious. 
 
 This is where Nautikos comes in. 
 
