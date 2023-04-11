@@ -1,11 +1,13 @@
 import os
+import pathlib
 import tempfile
+from copy import deepcopy
 from typing import Generator, TypedDict
 
 import pytest
 from ruamel.yaml import YAML
 
-from nautikos.nautikos import Nautikos
+from nautikos.nautikos import Modification, Nautikos
 
 CONFIG_FILE = """environments: 
 - name: prod 
@@ -105,6 +107,7 @@ class Tags(TypedDict):
 
 class BaseTest:
     TAGS: Tags
+    MODIFICATIONS: list[dict]
 
     def _test_kustomize_manifest(
         self, path: tuple[str, ...], tags: tuple[str, str, str]
@@ -143,6 +146,12 @@ class BaseTest:
         path = (workdir, "dev", "app1", "feature-A", "deployment.yaml")
         self._test_k8s_manifest(path, self.TAGS["dev_app_1_feature_a"])
 
+    def test_modifications(self, nautikos: Nautikos, workdir: str) -> None:
+        modifications = deepcopy(self.MODIFICATIONS)
+        for mod in modifications:
+            mod["path"] = str(pathlib.Path(workdir) / pathlib.Path(mod["path"]))
+        assert nautikos.modifications == [Modification(**mod) for mod in modifications]
+
 
 class TestModifyAll(BaseTest):
     TAGS = {
@@ -151,6 +160,32 @@ class TestModifyAll(BaseTest):
         "dev_app_1": ("1.2.3", "1.0", "1.0"),
         "dev_app_1_feature_a": ("1.2.3", "1.0", "1.0"),
     }
+    MODIFICATIONS = [
+        {
+            "path": "prod/app1/deployment.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        },
+        {
+            "path": "prod/app2/kustomize.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        },
+        {
+            "path": "dev/app1/deployment.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        },
+        {
+            "path": "dev/app1/feature-A/deployment.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        },
+    ]
 
     @pytest.fixture(autouse=True, scope="class")
     def modify(self, nautikos: Nautikos) -> None:
@@ -164,6 +199,20 @@ class TestModifyProd(BaseTest):
         "dev_app_1": ("1.0", "1.0", "1.0"),
         "dev_app_1_feature_a": ("1.0", "1.0", "1.0"),
     }
+    MODIFICATIONS = [
+        {
+            "path": "prod/app1/deployment.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        },
+        {
+            "path": "prod/app2/kustomize.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        },
+    ]
 
     @pytest.fixture(autouse=True, scope="class")
     def modify(self, nautikos: Nautikos) -> None:
@@ -177,6 +226,14 @@ class TestModifyProdApp1(BaseTest):
         "dev_app_1": ("1.0", "1.0", "1.0"),
         "dev_app_1_feature_a": ("1.0", "1.0", "1.0"),
     }
+    MODIFICATIONS = [
+        {
+            "path": "prod/app1/deployment.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        }
+    ]
 
     @pytest.fixture(autouse=True, scope="class")
     def modify(self, nautikos: Nautikos) -> None:
@@ -192,6 +249,14 @@ class TestModifyMultipleLabels(BaseTest):
         "dev_app_1": ("1.2.3", "1.0", "1.0"),
         "dev_app_1_feature_a": ("1.0", "1.0", "1.0"),
     }
+    MODIFICATIONS = [
+        {
+            "path": "dev/app1/deployment.yaml",
+            "repository": "my-repo",
+            "previous": "1.0",
+            "new": "1.2.3",
+        }
+    ]
 
     @pytest.fixture(autouse=True, scope="class")
     def modify(self, nautikos: Nautikos) -> None:

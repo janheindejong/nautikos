@@ -1,8 +1,10 @@
-import io
+import os
+import tempfile
+from typing import Generator
 
 import pytest
 
-from nautikos.manifests import KustomizeManifest
+from nautikos.manifests import KustomizeManifest, Modification
 
 INPUT = """# Comment
 resources:
@@ -30,49 +32,45 @@ patchesStrategicMerge:
 - ingress.yml
 """
 
-REPOSITORY = "some-repository"
-TAG = "1.1"
+
+@pytest.fixture(scope="class")
+def workdir() -> Generator[str, None, None]:
+    with tempfile.TemporaryDirectory() as workdir:
+        yield workdir
 
 
 @pytest.fixture(scope="class")
-def input_file() -> io.StringIO:
-    f = io.StringIO(INPUT)
-    return f
+def file_path(workdir: str) -> str:
+    path = os.path.join(workdir, "manifest.yaml")
+    with open(path, "w") as f:
+        f.write(INPUT)
+    return path
 
 
 @pytest.fixture(scope="class")
-def output_file() -> io.StringIO:
-    f = io.StringIO()
-    return f
-
-
-@pytest.fixture(scope="class")
-def manifest(input_file: io.StringIO) -> KustomizeManifest:
-    manifest = KustomizeManifest()
-    manifest.load(input_file)
+def manifest(file_path: str) -> KustomizeManifest:
+    manifest = KustomizeManifest(file_path)
     return manifest
 
 
 class TestKustomizeManifest:
     @pytest.fixture(autouse=True, scope="class")
     def modify(self, manifest: KustomizeManifest):
-        manifest.modify(REPOSITORY, TAG)
+        manifest.load()
+        manifest.modify("some-repository", "1.1")
+        manifest.write()
 
-    @pytest.fixture(autouse=True, scope="class")
-    def write(self, manifest: KustomizeManifest, output_file):
-        manifest.write(output_file)
+    def test_output(self, file_path: str):
+        with open(file_path, "r") as f:
+            s = f.read()
+        assert s == OUTPUT
 
-    def test_tag_applied_correctly(self, manifest: KustomizeManifest):
-        assert manifest.get_images()[0] == {
-            "repository": REPOSITORY,
-            "tag": TAG,
-        }
-
-    def test_different_image_untouched(self, manifest: KustomizeManifest):
-        assert manifest.get_images()[1] == {
-            "repository": "some-other-repository",
-            "tag": "1.2.3",
-        }
-
-    def test_write(self, output_file: io.StringIO):
-        assert output_file.getvalue() == OUTPUT
+    def test_modifications(self, manifest: KustomizeManifest, file_path: str):
+        assert manifest.modifications == [
+            Modification(
+                path=file_path,
+                repository="some-repository",
+                previous="1.0.0",
+                new="1.1",
+            )
+        ]

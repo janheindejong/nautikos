@@ -1,8 +1,10 @@
-import io
+import os
+import tempfile
+from typing import Generator
 
 import pytest
 
-from nautikos.manifests import KubernetesManifest
+from nautikos.manifests import KubernetesManifest, Modification
 
 INPUT = """# Comment
 apiVersion: apps/v1
@@ -60,55 +62,51 @@ spec:
         name: some-other-service
 """
 
-REPOSITORY = "some-repository"
-TAG = "1.1"
+
+@pytest.fixture(scope="class")
+def workdir() -> Generator[str, None, None]:
+    with tempfile.TemporaryDirectory() as workdir:
+        yield workdir
 
 
 @pytest.fixture(scope="class")
-def input_file() -> io.StringIO:
-    f = io.StringIO(INPUT)
-    return f
+def file_path(workdir: str) -> str:
+    path = os.path.join(workdir, "manifest.yaml")
+    with open(path, "w") as f:
+        f.write(INPUT)
+    return path
 
 
 @pytest.fixture(scope="class")
-def output_file() -> io.StringIO:
-    f = io.StringIO()
-    return f
-
-
-@pytest.fixture(scope="class")
-def manifest(input_file: io.StringIO) -> KubernetesManifest:
-    kubernetes_handler = KubernetesManifest()
-    kubernetes_handler.load(input_file)
-    return kubernetes_handler
+def manifest(file_path: str) -> KubernetesManifest:
+    manifest = KubernetesManifest(file_path)
+    return manifest
 
 
 class TestKubernetesManifest:
     @pytest.fixture(autouse=True, scope="class")
     def modify(self, manifest: KubernetesManifest):
-        manifest.modify(REPOSITORY, TAG)
+        manifest.load()
+        manifest.modify("some-repository", "1.1")
+        manifest.write()
 
-    @pytest.fixture(autouse=True, scope="class")
-    def write(self, manifest: KubernetesManifest, output_file):
-        manifest.write(output_file)
+    def test_modifications(self, manifest: KubernetesManifest, file_path: str):
+        assert manifest.modifications == [
+            Modification(
+                path=file_path,
+                repository="some-repository",
+                previous="1.0.0",
+                new="1.1",
+            ),
+            Modification(
+                path=file_path,
+                repository="some-repository",
+                previous="",
+                new="1.1",
+            ),
+        ]
 
-    def test_tag_applied_correctly(self, manifest: KubernetesManifest):
-        assert manifest.get_images()[0] == {
-            "repository": REPOSITORY,
-            "tag": TAG,
-        }
-
-    def test_no_tag_handled_correctly(self, manifest: KubernetesManifest):
-        assert manifest.get_images()[1] == {
-            "repository": REPOSITORY,
-            "tag": TAG,
-        }
-
-    def test_different_image_untouched(self, manifest: KubernetesManifest):
-        assert manifest.get_images()[2] == {
-            "repository": "some-other-repository",
-            "tag": "1.2.3",
-        }
-
-    def test_write(self, output_file: io.StringIO):
-        assert output_file.getvalue() == OUTPUT
+    def test_write(self, file_path: str):
+        with open(file_path, "r") as f:
+            s = f.read()
+        assert s == OUTPUT

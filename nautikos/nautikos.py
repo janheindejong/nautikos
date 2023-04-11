@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import os
 import pathlib
-import sys
 from typing import TypedDict
 
-from .manifests import get_manifest
+from .manifests import Modification, get_manifest
 from .yaml import yaml
 
 
@@ -30,6 +28,11 @@ class Nautikos:
         self._workdir: pathlib.Path = pathlib.Path(".")
         self._dry_run: bool = False
         self._environments: list[EnvironmentConfig] = []
+        self._modifications: list[Modification] = []
+
+    @property
+    def modifications(self) -> list[Modification]:
+        return self._modifications
 
     def set_dry_run(self, dry_run: bool) -> None:
         self._dry_run = dry_run
@@ -55,50 +58,49 @@ class Nautikos:
         If label is passed, only manifests with matching label are modified; otherwise
         all manifests in selected environments are modified.
         """
-        # Create list of environments
-        envs: list[EnvironmentConfig] = []
-        for env in self._environments:
-            if not environment or env["name"] == environment:
-                envs.append(env)
-        if len(envs) == 0:
-            raise Exception(f"Oops! No environments with name '{environment}' found...")
+        # Get all relevant environments
+        environments = self._get_environments(environment)
+        if len(environments) == 0:
+            raise Exception(f"Oops! No environments found; environment={environment}")
 
-        # Create list of manifests
+        # Get all relevant manifests
         manifests: list[ManifestConfig] = []
-        for env in envs:
-            for manifest in env["manifests"]:
-                if not labels or (
-                    "labels" in manifest
-                    and set(labels).issubset(set(manifest["labels"]))
-                ):
-                    manifests.append(manifest)
+        for env in environments:
+            manifests += self._get_manifests(env, labels)
         if len(manifests) == 0:
             raise Exception(
-                f"Oops!! No manifest found; environment={environment}"
+                f"Oops!! No manifest found; environment={environment};"
                 f"labels={labels}"
             )
 
         # Modify manifests
         for manifest_config in manifests:
-            self._modify_manifest(
-                manifest_config["type"],
+            manifest = get_manifest(
                 manifest_config["path"],
-                repository,
-                new_tag,
+                manifest_config["type"],
+                workdir=self._workdir,
             )
+            manifest.load()
+            manifest.modify(repository, new_tag)
+            if len(manifest.modifications) > 0:
+                if not self._dry_run:
+                    manifest.write()
+            self._modifications += manifest.modifications
 
-    def _modify_manifest(self, type: str, path: str, repository: str, tag: str) -> None:
-        manifest = get_manifest(type)
-        with open(os.path.join(self._workdir, pathlib.Path(path)), "r") as s:
-            manifest.load(s)
-        manifest.modify(repository, tag)
-        if self._dry_run:
-            manifest.write(sys.stdout)
-        else:
-            with open(os.path.join(self._workdir, pathlib.Path(path)), "w") as s:
-                manifest.write(s)
-                print(self._log_string(repository, tag, pathlib.Path(path)))
+    def _get_environments(self, environment: str | None) -> list[EnvironmentConfig]:
+        envs: list[EnvironmentConfig] = []
+        for env in self._environments:
+            if not environment or env["name"] == environment:
+                envs.append(env)
+        return envs
 
-    @staticmethod
-    def _log_string(repository: str, tag: str, path: str | pathlib.Path) -> str:
-        return f"Modified tag for {repository} to {tag} in {path}"
+    def _get_manifests(
+        self, env: EnvironmentConfig, labels: list[str] | None = None
+    ) -> list[ManifestConfig]:
+        manifests: list[ManifestConfig] = []
+        for manifest in env["manifests"]:
+            if not labels or (
+                "labels" in manifest and set(labels).issubset(set(manifest["labels"]))
+            ):
+                manifests.append(manifest)
+        return manifests
