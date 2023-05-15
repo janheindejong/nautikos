@@ -1,14 +1,14 @@
 import abc
 import pathlib
 from dataclasses import dataclass
-from typing import Any, TypedDict
+from typing import Any, TypedDict, Union
 
 from .yaml import yaml
 
 
 class Image(TypedDict):
     repository: str
-    tag: str | None
+    tag: Union[str, None]
 
 
 @dataclass
@@ -30,7 +30,7 @@ class Modification:
 
 
 class AbstractManifest(abc.ABC):
-    def __init__(self, path: str | pathlib.Path) -> None:
+    def __init__(self, path: Union[str, pathlib.Path]) -> None:
         self._path = path
         self._modifications: list[Modification] = []
 
@@ -54,7 +54,7 @@ class AbstractManifest(abc.ABC):
             raise Exception("You must first load a manifest")
 
     def _record_modification(
-        self, repository: str, old_tag: str | None, new_tag: str
+        self, repository: str, old_tag: Union[str, None], new_tag: str
     ) -> None:
         if not old_tag:
             old_tag = ""
@@ -121,7 +121,9 @@ class KustomizeManifest(AbstractManifest):
 
 
 def get_manifest(
-    path: str | pathlib.Path, type: str, workdir: str | pathlib.Path | None = None
+    path: Union[str, pathlib.Path],
+    type: str,
+    workdir: Union[str, pathlib.Path, None] = None,
 ) -> AbstractManifest:
     if workdir:
         path = pathlib.Path(workdir) / pathlib.Path(path)
