@@ -5,6 +5,8 @@
 [![PyPI version](https://badge.fury.io/py/nautikos.svg)](https://badge.fury.io/py/nautikos)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Python versions](https://img.shields.io/pypi/pyversions/nautikos)]()
+![example branch parameter](https://github.com/janheindejong/nautikos/actions/workflows/test.yml/badge.svg?branch=main)
+
 
 ## Rationale
 
