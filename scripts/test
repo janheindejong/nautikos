@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+ruff check . 
+black --check .
+mypy --exclude .venv .
+pytest . \
+    --cov \
+    --junitxml=.test-output/test-results.xml \
+    --cov-report=xml:.test-output/coverage.xml
