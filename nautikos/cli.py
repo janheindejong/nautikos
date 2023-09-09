@@ -45,7 +45,7 @@ def main(
         exit_msg = "ERROR - Didn't find any images to modify"
         exit_code = 1
     else:
-        exit_msg = f"Updated {count_updated_img} out of {len(nautikos.modifications)} discovered occurances of '{repository}' to '{tag}'"  # noqa: E501
+        exit_msg = f"Updated {count_updated_img} out of {len(nautikos.modifications)} discovered occurences of '{repository}' to '{tag}'"  # noqa: E501
         exit_code = 0
     print(exit_msg)
     sys.exit(exit_code)
